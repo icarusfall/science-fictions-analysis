@@ -112,7 +112,13 @@ class PodcastAnalyzer:
         # Create filename from episode number and title
         safe_title = re.sub(r'[^\w\s-]', '', episode['title']).strip()
         safe_title = re.sub(r'[-\s]+', '-', safe_title)[:50]  # Limit length
-        filename = f"{episode['episode_number']:03d}_{safe_title}.mp3"
+
+        # Use episode number if available, otherwise just use title
+        if episode['episode_number'] is not None:
+            filename = f"{episode['episode_number']:03d}_{safe_title}.mp3"
+        else:
+            filename = f"{safe_title}.mp3"
+
         filepath = self.downloads_dir / filename
 
         if filepath.exists():
@@ -138,7 +144,15 @@ class PodcastAnalyzer:
     def transcribe_episode(self, episode: Dict, audio_path: Path) -> Optional[Dict]:
         """Transcribe episode using Whisper."""
         # Check if transcript already exists
-        transcript_filename = f"{episode['episode_number']:03d}_transcript.json"
+        # Create safe filename - use episode number if available, otherwise use sanitized title
+        if episode['episode_number'] is not None:
+            transcript_filename = f"{episode['episode_number']:03d}_transcript.json"
+        else:
+            # Use sanitized title for episodes without numbers
+            safe_title = re.sub(r'[^\w\s-]', '', episode['title']).strip()
+            safe_title = re.sub(r'[-\s]+', '-', safe_title)[:50]
+            transcript_filename = f"{safe_title}_transcript.json"
+
         transcript_path = self.transcripts_dir / transcript_filename
 
         if transcript_path.exists():
