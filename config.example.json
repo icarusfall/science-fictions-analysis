@@ -1,0 +1,8 @@
+{
+  "rss_feed_url": "YOUR_PRIVATE_RSS_FEED_URL_HERE",
+  "anthropic_api_key": "YOUR_ANTHROPIC_API_KEY_HERE",
+  "whisper_model": "base",
+  "downloads_dir": "downloads",
+  "transcripts_dir": "transcripts",
+  "results_dir": "results"
+}

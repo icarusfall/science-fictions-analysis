@@ -1,0 +1,5 @@
+feedparser>=6.0.0
+requests>=2.31.0
+openai-whisper>=20231117
+anthropic>=0.18.0
+torch>=2.0.0

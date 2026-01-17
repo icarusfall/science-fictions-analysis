@@ -1,0 +1,40 @@
+# Private data - DO NOT COMMIT
+config.json
+cookies.txt
+downloads/
+transcripts/
+transcripts_substack/
+results/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test/temp files
+examine_feed.py
+test_transcript_access.py
+test_cookie_access.py
+check_page_transcript.py
+analyze_podcast_with_cookies.py
+COOKIE_INSTRUCTIONS.md
