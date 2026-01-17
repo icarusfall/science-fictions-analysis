@@ -96,11 +96,24 @@ class PodcastAnalyzer:
 
         return episodes
 
-    def _extract_episode_number(self, title: str) -> Optional[int]:
-        """Extract episode number from title."""
+    def _extract_episode_number(self, title: str):
+        """Extract episode number from title.
+
+        Returns:
+            int for regular episodes (e.g., "Episode 25" -> 25)
+            str for paid episodes (e.g., "Paid-only episode 25" -> "P25")
+            None for episodes without numbers
+        """
+        # Check for paid-only episodes first
+        match = re.search(r'Paid-only episode (\d+)', title, re.IGNORECASE)
+        if match:
+            return f"P{match.group(1)}"
+
+        # Check for regular episodes
         match = re.search(r'Episode (\d+)', title, re.IGNORECASE)
         if match:
             return int(match.group(1))
+
         return None
 
     def download_episode(self, episode: Dict) -> Optional[Path]:
@@ -115,7 +128,12 @@ class PodcastAnalyzer:
 
         # Use episode number if available, otherwise just use title
         if episode['episode_number'] is not None:
-            filename = f"{episode['episode_number']:03d}_{safe_title}.mp3"
+            ep_num = episode['episode_number']
+            # Format as 003 for integers, use as-is for strings like "P25"
+            if isinstance(ep_num, int):
+                filename = f"{ep_num:03d}_{safe_title}.mp3"
+            else:
+                filename = f"{ep_num}_{safe_title}.mp3"
         else:
             filename = f"{safe_title}.mp3"
 
@@ -146,7 +164,12 @@ class PodcastAnalyzer:
         # Check if transcript already exists
         # Create safe filename - use episode number if available, otherwise use sanitized title
         if episode['episode_number'] is not None:
-            transcript_filename = f"{episode['episode_number']:03d}_transcript.json"
+            ep_num = episode['episode_number']
+            # Format as 003 for integers, use as-is for strings like "P25"
+            if isinstance(ep_num, int):
+                transcript_filename = f"{ep_num:03d}_transcript.json"
+            else:
+                transcript_filename = f"{ep_num}_transcript.json"
         else:
             # Use sanitized title for episodes without numbers
             safe_title = re.sub(r'[^\w\s-]', '', episode['title']).strip()
