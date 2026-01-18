@@ -143,6 +143,16 @@ class PodcastAnalyzer:
             print(f"  Audio already downloaded: {filename}")
             return filepath
 
+        # Fallback: check for old naming scheme (paid-only episodes were previously
+        # saved with just the number, e.g., "025" instead of "P25")
+        if isinstance(episode['episode_number'], str) and episode['episode_number'].startswith('P'):
+            old_num = int(episode['episode_number'][1:])  # Extract number from "P25"
+            old_filename = f"{old_num:03d}_{safe_title}.mp3"
+            old_path = self.downloads_dir / old_filename
+            if old_path.exists():
+                print(f"  Audio found with old naming scheme: {old_filename}")
+                return old_path
+
         print(f"  Downloading: {filename}")
         try:
             response = requests.get(episode['audio_url'], stream=True)
@@ -178,10 +188,22 @@ class PodcastAnalyzer:
 
         transcript_path = self.transcripts_dir / transcript_filename
 
+        # Check for transcript with new naming scheme
         if transcript_path.exists():
             print(f"  Transcript already exists: {transcript_filename}")
-            with open(transcript_path, 'r') as f:
+            with open(transcript_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
+
+        # Fallback: check for old naming scheme (paid-only episodes were previously
+        # saved with just the number, e.g., "025" instead of "P25")
+        if isinstance(episode['episode_number'], str) and episode['episode_number'].startswith('P'):
+            old_num = int(episode['episode_number'][1:])  # Extract number from "P25"
+            old_filename = f"{old_num:03d}_transcript.json"
+            old_path = self.transcripts_dir / old_filename
+            if old_path.exists():
+                print(f"  Found transcript with old naming scheme: {old_filename}")
+                with open(old_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
 
         # Lazy load Whisper model
         if self.whisper_model is None:
@@ -354,8 +376,18 @@ If you find no instances, return an empty array: []"""
         """Generate output report in CSV and Markdown formats."""
         print("\nGenerating reports...")
 
-        # Sort by episode number
-        findings.sort(key=lambda x: x['episode_number'] if x['episode_number'] else 0, reverse=True)
+        # Sort by episode number (handling int, str like "P25", and None)
+        def sort_key(x):
+            ep_num = x['episode_number']
+            if ep_num is None:
+                return (2, 0)  # None goes last
+            elif isinstance(ep_num, str):
+                # "P25" -> (1, 25) - paid episodes after regular, sorted by number
+                return (1, int(ep_num[1:]))
+            else:
+                return (0, ep_num)  # Regular episodes first
+
+        findings.sort(key=sort_key, reverse=True)
 
         # Generate CSV
         csv_path = self.results_dir / "future_episodes.csv"
